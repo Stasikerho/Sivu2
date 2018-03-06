@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>ranking</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <link href='https://fonts.googleapis.com/css?family=Lobster|Cabin:400,700' rel='stylesheet' type='text/css'>
+        <link href='static/style.css' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+        <div class="container theme-showcase" role="main" id="vue-app">
+            <div id="detail" v-if="name" v-cloak>
+                <p v-if="banner"><img v-on:click="bannerChange" v-bind:src="banner" /></p>
+                <div class="row">
+                    <div class="col-md-4" v-bind:class="{ 'col-md-offset-4': competitors.length < 2, 'sliding-transition': competitors.length >= 2 }">
+                        <h2>Ranking</h2>
+                        <p v-if="competitors.length < 2">{{ lang.hintStart }}</p>
+                        <table id="competitors" v-bind:class="{ 'table': competitors.length, 'unstyled': !competitors.length }">
+                            <thead v-if="competitors.length">
+                                <tr>
+                                    <th>Nimi</th>
+                                    <th>Pelien määrä</th>
+                                    <th>Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="competitor in competitors | orderBy '(paused ? 0 : 10000) + ranking.getRating()' -1" v-bind:class="{ 'active': !competitor.matched }">
+                                    <td data-competitor="{{ competitors.indexOf(competitor) }}">
+                                        <span class="dropdown">
+                                            <span class="dropdown-toggle" v-bind:class="{ 'text-muted': competitor.paused }" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{ competitor.name }} <span class="caret"></span></span>
+                                            <ul class="dropdown-menu">
+                                                <li><a href="#" v-on:click="competitorNameChange(competitor)">{{ lang.competitorName }}</a>
+                                                <li><a href="#" v-on:click="competitorInitialRatingChange(competitor)">{{ lang.competitorInitialRating }}</a>
+                                                <li><a href="#" v-on:click="competitorPause(competitor)"><span v-if="competitor.paused">{{ lang.tournamentContinue }}</span><span v-else>{{ lang.tournamentPause }}</span></a>
+                                            </ul>
+                                        </span>
+                                    </td>
+                                    <td v-bind:class="{ 'text-muted': competitor.paused }">{{ competitor | matchesCompletedLength }}</td>
+                                    <td title="{{ Math.max(100, competitor.ranking.getRating()) / 100 | round '2' }}">
+                                        <div class="progress">
+                                            <div class="progress-bar {{ competitor | competitorToProgressBarClass }}" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ Math.min(100, Math.max(20, competitor.ranking.getRating() / 20)) }}%;">
+                                                <span v-if="competitor.ranking.getRating() >= 1300">{{ Math.max(100, competitor.ranking.getRating()) / 100 | round '1' }}</span>
+                                                <span v-else>{{ Math.max(100, competitor.ranking.getRating()) / 100 | round '0' }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="btn-group">
+                                            <button id="competitor-add" class="btn btn-success" v-bind:class="{ 'btn-sm': matches.length }" v-on:click="competitorAdd(null)"><span class="glyphicon glyphicon-plus"></span> {{ lang.competitorAdd }}</button>
+                                            <button title="{{ lang.competitorAddMultiple }}" class="btn btn-success" v-bind:class="{ 'btn-sm': matches.length }" data-toggle="modal" data-target="#competitor-add-multiple"><span class="glyphicon glyphicon-th-list"></span></button>
+                                        </div>
+                                        <div class="modal fade" id="competitor-add-multiple" tabindex="-1" role="dialog">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-body">
+                                                        <p>{{ lang.hintBulkAdd }}</p>
+                                                        <textarea class="form-control"></textarea>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang.cancel }}</button>
+                                                        <button type="button" class="btn btn-success" v-on:click="competitorAddMultiple">{{ lang.competitorAddMultiple }}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="col-md-8" v-if="competitors.length > 1" transition="delayedfade">
+                        <h2>Pelaamattomat ottelut</h2>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>{{ lang.matchesFavored }}</th>
+                                    <th class="hidden-xs"></th>
+                                    <th>{{ lang.matchesChallenger }}</th>
+                                    <th>{{ lang.matchesFinished }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="match in matches | finished false | favoredOrder">
+                                    <td v-bind:class="{ 'text-muted': match.favored.paused }" data-competitor="{{ competitors.indexOf(match.favored) }}">{{ match.favored.name }}</td>
+                                    <td class="hidden-xs">
+                                        <div class="progress" v-if="match.favored.matches.length > 2 || match.unfavored.matches.length > 2">
+                                            <div class="progress-bar progress-bar-{{ match.favored | competitorToClass }}" style="width: 50%">&nbsp;</div>
+                                            <div class="progress-bar progress-bar-{{ match.unfavored | competitorToClass }}" style="width: 50%">&nbsp;</div>
+                                        </div>
+                                    </td>
+                                    <td v-bind:class="{ 'text-muted': match.unfavored.paused }" data-competitor="{{ competitors.indexOf(match.unfavored) }}">{{ match.unfavored.name }}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-success btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">{{ lang.matchesRecord }} <span class="caret"></span></button>
+                                            <ul class="dropdown-menu dropdown-menu-right">
+                                                <li><a href="#" v-on:click="matchResolve(match, RESULT_FAVORED)">{{ lang.matchesWin }} {{ match.favored.name }}</a></li>
+                                                <li><a href="#" v-on:click="matchResolve(match, RESULT_TIE)">{{ lang.matchesTie }}</a></li>
+                                                <li><a href="#" v-on:click="matchResolve(match, RESULT_UNFAVORED)">{{ lang.matchesWin }} {{ match.unfavored.name }}</a></li>
+                                                <li role="separator" class="divider"></li>
+                                                <li><a href="#" v-on:click="matchResolve(match, RESULT_ABANDONED)">{{ lang.matchesSkipped }}</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="active">
+                                    <td colspan="4">
+                                        <button class="btn btn-sm btn-default" data-toggle="modal" data-target="#match-add"><span class="glyphicon glyphicon-plus"></span> {{ lang.matchesAdd }}</button>
+                                        <button v-on:click="planMatches()" class="btn btn-sm" v-bind:class="{ 'btn-primary': !matches.length, 'btn-default': matches.length }"><span class="glyphicon glyphicon-play"></span> {{ lang.tournamentContinue }}</button>
+                                        <span class="dropdown">
+                                            <button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"><span class="glyphicon glyphicon-cog"></span> <span class="caret"></span></button>
+                                            <ul class="dropdown-menu dropdown-menu-right">
+                                                <li class="dropdown-header">{{ lang.tournamentBenign }}</li>
+                                                <li><a href="#" v-on:click="tournamentExport">{{ lang.tournamentExport }}</a>
+                                                <li><a href="#" v-on:click="bannerChange">{{ lang.tournamentBanner }}</a>
+                                                <li role="separator" class="divider"></li>
+                                                <li class="dropdown-header">{{ lang.tournamentDestructive }}</li>
+                                                <li><a href="#" v-on:click="tournamentDelete">{{ lang.tournamentDelete }}</a>
+                                            </ul>
+                                        </span>
+                                        <div class="modal" id="match-add" tabindex="-1" role="dialog">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-body">
+                                                        <div class="row">
+                                                            <div class="col-sm-6">
+                                                                <select class="form-control" id="match-add-left">
+                                                                    <option v-for="competitor in competitors | orderBy '(paused ? 0 : 10000) + ranking.getRating()' -1">{{ competitor.name }}</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-sm-6">
+                                                                <select class="form-control" id="match-add-right">
+                                                                    <option v-for="competitor in competitors | orderBy '(paused ? 0 : 10000) + ranking.getRating()' -1">{{ competitor.name }}</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang.cancel }}</button>
+                                                        <button type="button" class="btn btn-success" v-on:click="matchAdd">{{ lang.matchesAdd }}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <footer class="small">
+                            <p v-if="competitors.length && matches.length && matches.length < competitors.length * 5">{{ lang.hintContinueUntil }}</p>
+                            <p v-if="competitors.length && matches.length >= competitors.length * 5">{{ lang.hintFinishRemaining }}</p>
+                        </footer>
+                        <h2>Pelatut ottelut</h2>
+                        <table class="table table-condensed" id="matches-completed">
+                            <thead>
+                                <tr>
+                                    <th>{{ lang.matchesMatched }}</th>
+                                    <th>{{ lang.matchesFavored }}</th>
+                                    <th>{{ lang.matchesChallenger }}</th>
+                                    <th>{{ lang.matchesFinished }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="match in matches | finished true | orderBy 'finished' -1">
+                                    <td>{{ match.start.toLocaleTimeString() }}</td>
+                                    <td v-bind:class="{ 'text-muted': match.favored.paused,   'danger': match.result === RESULT_UNFAVORED, 'success': match.result === RESULT_FAVORED, 'warning': match.result === RESULT_TIE, 'info': match.result === RESULT_ABANDONED }" data-competitor="{{ competitors.indexOf(match.favored) }}">{{ match.favored.name }}</td>
+                                    <td v-bind:class="{ 'text-muted': match.unfavored.paused, 'danger': match.result === RESULT_FAVORED, 'success': match.result === RESULT_UNFAVORED, 'warning': match.result === RESULT_TIE, 'info': match.result === RESULT_ABANDONED }" data-competitor="{{ competitors.indexOf(match.unfavored) }}">{{ match.unfavored.name }}</td>
+                                    <td v-on:click="matchRevert(match)">{{ match.finished.toLocaleTimeString() }} <span class="caret"></span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="index" v-else class="unstyled" v-cloak>
+                <p><img id="logo" src="static/trophy-icon.png" /></p>
+                <h1>Ranking</h1>
+                <p>
+                    <span v-for="tournamentName in tournamentNames">
+                        
+                    </span>
+                    <button class="btn btn-success" v-on:click="tournamentAdd"><span class="glyphicon glyphicon-plus"></span> Aloita uusi</button>
+                </p>
+                <h3>Lisää turnaus</h3>
+                <input type="file" id="files" name="files[]" multiple class="btn btn-default btn-sm" />
+            </div>
+        </div>
+        <noscript>
+            <h2>Tarvitsee JavaScriptin toimiakseen</h2>
+            <p>You're free to inspect the code or run your own fork (<a href="https://github.com/bradbeattie/sortmatch">the source is hosted on github</a>).</p>
+        </noscript>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.15/vue.min.js"></script>
+        <script src="static/jquery.color-2.1.2.min.js"></script>
+        <script src="static/FileSaver.min.js"></script>
+        <script src="static/glicko2.js"></script>
+        <script src="static/lang.js"></script>
+        <script src="static/tournament.js"></script>
+    </body>
+</html>

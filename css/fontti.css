@@ -1,0 +1,13 @@
+@font-face {
+            font-family: mass;
+            src: url(/tiedostot/me.ttf);
+            font-weight: bold;	
+	    font-style: normal;
+        }
+		
+		p {
+ 	    text-align: center;
+            font-family: 'mass';
+            color: #f2f2f2;
+			text-shadow: 4px 4px 10px #11326f;
+        }

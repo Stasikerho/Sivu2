@@ -1,0 +1,38 @@
+body { background: #ccc; font-family: "Cabin", sans-serif; margin-bottom: 20px; }
+body.index { background: #FFE4B5; }
+table { width: 100%; margin-bottom: 20px; }
+.btn input { display: none; }
+.table { background: #fff; }
+.table, .unstyled .btn, .well, img { box-shadow: 0 0.2em 0.4em rgba(0,0,0,0.2); }
+.progress { margin-bottom: 0; }
+.unstyled .btn { margin-top: 2px; margin-bottom: 2px; }
+.table thead th, .table tfoot td { background: #fcfcfc; }
+a { color: black; }
+h1, h2, h3 { font-family: "Lobster", serif; text-shadow: 0 0.06em 0.12em rgba(0,0,0,0.2); margin-bottom: 0.3em; }
+h1, h2, td, th, p, footer, .unstyled { text-align: center; }
+img { max-width: 100%; }
+input[type=file] { display: inline-block; }
+footer { opacity: 0.5; margin-bottom: 3em; }
+footer hr { margin: 10px 0; }
+footer p { margin-bottom: 0.2em; }
+td > div { border-radius: 1em; }
+#countdown { font-family: monospace; }
+#detail h1 { font-size: 30px; }
+#logo { margin-top: 20px; border-radius: 128px; }
+[v-cloak] { display: none; }
+.sliding-transition { -webkit-transition: all 1s ease 0s; transition: all 1s ease 0s; }
+.delayedfade-transition { -webkit-transition: all 1s ease 1s; transition: all 1s ease 1s; }
+.delayedfade-enter, .delayedfade-leave { opacity: 0; }
+.caret, .dropdown { cursor: pointer; }
+.rating-label { width: 2.5em; display: inline-block; }
+tr.hover td { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgUAMAACkAJ+Ip3LMAAAAASUVORK5CYII=); }
+tr.hover td.hover { box-shadow: inset 0 0 0 0.4em rgba(0,0,0,0.2); }
+#competitor-add-multiple p { text-align: left; }
+#competitor-add-multiple textarea { height: 20em; }
+#matches-completed .success { font-weight: bold; }
+#index { max-width: 500px; margin: auto; }
+
+/* Vertically center modals */
+.modal { text-align: center; padding: 0!important; }
+.modal:before { content: ''; display: inline-block; height: 100%; vertical-align: middle; margin-right: -4px; }
+.modal-dialog { display: inline-block; text-align: left; vertical-align: middle; }
